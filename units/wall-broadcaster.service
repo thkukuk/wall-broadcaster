@@ -1,0 +1,13 @@
+[Unit]
+Description=D-Bus Wall and Write Message Broadcaster
+After=dbus.service systemd-logind.service
+Requires=dbus.service systemd-logind.service
+
+[Service]
+Type=simple
+Environment="WALLBROADCASTER_OPTS="
+EnvironmentFile=-/etc/default/wall-broadcaster
+ExecStart=/usr/libexec/wall-broadcaster $WALLBROADCASTER_OPTS
+
+[Install]
+WantedBy=multi-user.target
