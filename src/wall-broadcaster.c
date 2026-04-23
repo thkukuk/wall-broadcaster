@@ -54,16 +54,12 @@ return_errno_error(const char *function, int r)
   return r;
 }
 
-// XXX fix return values
 static int
-parse_broadcast_message(const char *msg,
-			char **sender_ret,
-			time_t *send_ret)
+parse_broadcast_message(const char *prefix, const char *msg,
+			char **sender_ret)
 {
-  const char *prefix = "Broadcast message from ";
-  size_t prefix_len = strlen(prefix);
   _cleanup_free_ char *sender = NULL;
-  time_t send = (time_t)-1;
+  size_t prefix_len = strlen(prefix);
 
   if (strncmp(msg, prefix, prefix_len) != 0)
     return -EINVAL;
@@ -81,27 +77,8 @@ parse_broadcast_message(const char *msg,
   strncpy(sender, sender_start, sender_len);
   sender[sender_len] = '\0';
 
-  /* Use strrchr to find the last opening parenthesis. This safely
-     skips the TTY "(pts/6)" part */
-  const char *time_start = strrchr(sender_end, '(');
-  if (time_start)
-    {
-      time_start++;
-
-      // Parse the time string into a struct tm
-      struct tm tm_info;
-      memset(&tm_info, 0, sizeof(struct tm));
-      tm_info.tm_isdst = -1;
-
-      // Format: "Wed Apr 22 12:03:39 2026"
-      char *parse_result =
-	strptime(time_start, "%a %b %d %H:%M:%S %Y", &tm_info);
-      if (parse_result)
-	send = mktime(&tm_info);
-    }
-
   *sender_ret = TAKE_PTR(sender);
-  *send_ret = (time_t)send;
+
   return 0;
 }
 
@@ -111,7 +88,12 @@ pty_handler(sd_event_source *s _unused_, int fd,
 	    uint32_t revents _unused_, void *userdata)
 {
   sd_bus *bus = userdata;
+  const char *appname = "WallBroadcaster";
+  _cleanup_free_ char *summary = NULL;
+  _cleanup_free_ char *sender = NULL; // Optional
+  int8_t urgency = 1; // 0 = low, 1 = normal, 2 = critical
   char buffer[4096]; // XXX try to find a better solution
+  const char *body = buffer;
   int r;
 
   if (debug)
@@ -126,13 +108,10 @@ pty_handler(sd_event_source *s _unused_, int fd,
   if (debug)
     log_msg(LOG_DEBUG, "buffer[%s]", buffer);
 
-  _cleanup_free_ char *sender = NULL;
-  const char *priority = NULL; // optional, not supported with wall/write
-  const char *receiver = NULL; // optional, not supported with wall/write
-  const char *message = buffer;
-  time_t send = (time_t)-1;
+  const char *prefix_wall = "Broadcast message from ";
+  const char *prefix_write = "Message from ";
 
-  if (strncmp(buffer, "Broadcast message from ", 23) == 0)
+  if (strncmp(buffer, prefix_wall, strlen(prefix_wall)) == 0)
     {
       char *cp = strchr(buffer, '\n');
       if (cp == NULL)
@@ -140,33 +119,42 @@ pty_handler(sd_event_source *s _unused_, int fd,
       else
 	{
 	  *cp++='\0';
-	  message = cp;
+	  body = cp;
+	  summary = buffer;
 	}
-
-      // pass only the first line to the parser
-      r = parse_broadcast_message(buffer, &sender, &send);
+      r = parse_broadcast_message(prefix_wall, buffer, &sender);
       if (r < 0)
 	return 0;
     }
-#if 0 // XXX handle "write" messages
-  else if (strncmp(buffer, "Message from ", 13) == 0)
+  else if (strncmp(buffer, prefix_write, strlen(prefix_write)) == 0)
     {
-      sender = "write-sender";
-      receiver = "this-session";
+      char *cp = strchr(buffer, '\n');
+      if (cp == NULL)
+	log_msg(LOG_NOTICE, "\\n not found in buffer [%s]", buffer);
+      else
+	{
+	  *cp++='\0';
+	  body = cp;
+	  summary = buffer;
+	}
+      r = parse_broadcast_message(prefix_write, buffer, &sender);
+      if (r < 0)
+	return 0;
     }
-#endif
 
   /*
-    Signature 'ssss' maps to:
-    Message (s), Sender (s), Priority (s), Receiver (s), Timestamp (x)
+    Signature 'sssys' maps to:
+    Application Name(s), Summary(s), Body(s), Urgency(y), Sender(s)
+    Application Name, Summary, Body and Urgency follow the
+    Freedesktop Notification Specification.
   */
   sd_bus_emit_signal(bus,
-		     "/org/opensuse/WallBroadcaster",
-		     "org.opensuse.WallBroadcaster",
+		     "/org/opensuse/WallBroadcast",
+		     "org.opensuse.WallBroadcast",
 		     "MessageReceived",
-		     "ssss",
-		     message, strna(sender), strempty(priority),
-		     strempty(receiver), (int64_t)send);
+		     "sssys",
+		     strempty(appname), strempty(summary), strna(body),
+		     urgency, strna(sender));
 
   return 0;
 }
@@ -254,7 +242,7 @@ run_service_loop(void)
   r = sd_bus_default_system(&bus);
   if (r < 0)
     return return_errno_error("sd_bus_default_system", r);
-  r = sd_bus_request_name(bus, "org.opensuse.WallBroadcaster", 0);
+  r = sd_bus_request_name(bus, "org.opensuse.WallBroadcast", 0);
   if (r < 0)
     return return_errno_error("sd_bus_request_name", r);
 

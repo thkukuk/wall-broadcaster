@@ -5,7 +5,7 @@ Wall Broadcaster is a service which registers itself as session with
 them via D-BUS. Clients, e.g. for graphical desktops, can listen to it
 and display the messages to the user.
 
-In the past, terminals did register as own "session" with `/run/utmp` and 
+In the past, terminals did register as own "session" with `/run/utmp` and
 displayed the messages to the user in the terminal. As consequence, people
 having a lot of terminals running got the message in every single terminal.
 This was so annyoing, that several GUI don't support this anymore.
@@ -14,6 +14,22 @@ informations.
 With `systemd-logind` replacing `utmp`, this hack does not work anymore at all.
 So this service provides a new, generic solution which should work for all
 users.
+
+## DBUS Protocol
+
+The notification components are very similar to the
+[Freedesktop Notifications Specification](https://specifications.freedesktop.org/notification/latest-single/) to make it easy to convert it to the desktop notification system.
+
+|Component|Type|Description|
+|---------|-----------|
+|Application Name|String(s)|Optional name of the application sending the notification|
+|Summary|String(s)|Single line overview|
+|Body|String(s)|Multi-line text|
+|Urgency|Byte(y)|0=Low, 1=Normal, 2=Critical|
+|Sender|String(s)|Optional name of the sender|
+
+* Path=/org/opensuse/WallBroadcast
+* Interface=org.opensuse.WallBroadcast
 
 ## Enable and Test
 Reload systemd, enable the service, and start it.
@@ -26,7 +42,7 @@ sudo systemctl enable --now wall-broadcaster.service
 ### Testing
 * Open a new terminal and monitor the D-Bus signals using `dbus-monitor`:
   ```sh
-  sudo dbus-monitor --system "sender='org.opensuse.WallBroadcaster'"
+  sudo dbus-monitor --system "sender='org.opensuse.WallBroadcast'"
   ```
 * In another terminal, trigger a wall message:
   ```sh

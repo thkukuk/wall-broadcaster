@@ -1,1 +1,1 @@
-install_data('org.opensuse.WallBroadcaster.conf', install_dir : dbuspolicydir)
+install_data('org.opensuse.WallBroadcast.conf', install_dir : dbuspolicydir)
