@@ -58,6 +58,7 @@ systemunitdir = prefixdir / 'lib/systemd/system'
 dbuspolicydir = prefixdir / 'share/dbus-1/system.d'
 
 libsystemd = dependency('libsystemd', required : true)
+libgtk4 = dependency('gtk4', required: get_option('gtk4'))
 
 wall_broadcaster_c = ['src/wall-broadcaster.c']
 executable('wall-broadcaster',
@@ -80,6 +81,15 @@ executable('wall-bcst-gateway',
            include_directories : inc,
            dependencies : [libsystemd],
            install : true)
+
+if libgtk4.found()
+wall_bcst_watcher_gtk4_c = ['src/wall-bcst-watcher-gtk4.c']
+executable('wall-bcst-watcher-gtk4',
+           wall_bcst_watcher_gtk4_c,
+           include_directories : inc,
+           dependencies : [libgtk4],
+           install : true)
+endif
 
 configure_file(output: 'config.h', configuration: conf)
 
