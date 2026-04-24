@@ -133,7 +133,7 @@ main(int argc, char *argv[])
           {NULL,      0,           NULL, '\0'}
         };
 
-      c = getopt_long (argc, argv, "dhv",
+      c = getopt_long (argc, argv, "hv",
                        long_options, &option_index);
       if (c == (-1))
         break;
