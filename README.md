@@ -32,6 +32,10 @@ This application will register to the system dbus and the user session dbus of t
 
 This is a small utility, which listens to org.opensuse.WallBroadcast messages prints them on stdout.
 
+### wall-bcst-watcher-gtk4
+
+A GTK4 application, which listens to org.opensuse.WallBroadcast messages and opens a popup window for each message.
+
 ## DBUS Protocol
 
 The notification components are very similar to the
