@@ -76,7 +76,12 @@ wall_broadcast_cb(sd_bus_message *m, void *userdata,
   if (r >= 0)
     r = sd_bus_message_close_container(notify_msg);
   if (r >= 0)
-    r = sd_bus_message_append(notify_msg, "i", (int32_t)-1);
+    {
+      if (urgency == 2)
+	r = sd_bus_message_append(notify_msg, "i", (int32_t)0);
+      else
+	r = sd_bus_message_append(notify_msg, "i", (int32_t)-1);
+    }
 
   if (r < 0)
     fprintf(stderr, "Error constructing message: %s\n", strerror(-r));
