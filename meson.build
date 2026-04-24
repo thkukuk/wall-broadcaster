@@ -36,7 +36,6 @@ possible_cc_flags = [
 		  '-fasynchronous-unwind-tables',
 		  '-fstack-clash-protection',
 		  '-Werror=return-type',
-		  '-Wbad-function-cast',
 		  '-Wcast-align',
                   '-Wformat-security',
 		  '-Wmissing-declarations',
