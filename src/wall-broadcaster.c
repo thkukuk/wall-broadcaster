@@ -100,8 +100,8 @@ pty_handler(sd_event_source *s _unused_, int fd,
     log_msg(LOG_DEBUG, "pty_handler called");
 
   /* "wall" writes messages as several single strings, not in once.
-     wait 0.5 seconds that everything got written. */
-  usleep(500000);
+     wait 0.1 seconds that everything got written. */
+  usleep(100000);
   ssize_t n = read(fd, buffer, sizeof(buffer) - 1);
   if (n <= 0)
     return 0;
