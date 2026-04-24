@@ -89,16 +89,19 @@ pty_handler(sd_event_source *s _unused_, int fd,
 {
   sd_bus *bus = userdata;
   const char *appname = "WallBroadcaster";
-  _cleanup_free_ char *summary = NULL;
+  char *summary = NULL;
   _cleanup_free_ char *sender = NULL; // Optional
   int8_t urgency = 1; // 0 = low, 1 = normal, 2 = critical
   char buffer[4096]; // XXX try to find a better solution
-  const char *body = buffer;
+  char *body = buffer;
   int r;
 
   if (debug)
     log_msg(LOG_DEBUG, "pty_handler called");
 
+  /* "wall" writes messages as several single strings, not in once.
+     wait 0.5 seconds that everything got written. */
+  usleep(500000);
   ssize_t n = read(fd, buffer, sizeof(buffer) - 1);
   if (n <= 0)
     return 0;
@@ -108,38 +111,77 @@ pty_handler(sd_event_source *s _unused_, int fd,
   if (debug)
     log_msg(LOG_DEBUG, "buffer[%s]", buffer);
 
+  // cleanup buffer
+  if (body[0] == '\r') // wall prints '"\r%*s\r\n", TERM_WIDTH, " "'
+    {
+      char *cp = strchr(buffer, '\n');
+      if (cp == NULL)
+	log_msg(LOG_NOTICE, "\\n not found in buffer [%s]", buffer);
+      else
+	{
+	  *cp++='\0';
+	  body = cp;
+	}
+    }
+
   const char *prefix_wall = "Broadcast message from ";
   const char *prefix_write = "Message from ";
 
-  if (strncmp(buffer, prefix_wall, strlen(prefix_wall)) == 0)
+  if (strncmp(body, prefix_wall, strlen(prefix_wall)) == 0)
     {
-      char *cp = strchr(buffer, '\n');
-      if (cp == NULL)
-	log_msg(LOG_NOTICE, "\\n not found in buffer [%s]", buffer);
-      else
+      char *cp = strchr(body, '\n');
+      if (cp != NULL)
 	{
+	  summary = body;
 	  *cp++='\0';
 	  body = cp;
-	  summary = buffer;
 	}
-      r = parse_broadcast_message(prefix_wall, buffer, &sender);
+      r = parse_broadcast_message(prefix_wall, summary?summary:body, &sender);
       if (r < 0)
 	return 0;
     }
-  else if (strncmp(buffer, prefix_write, strlen(prefix_write)) == 0)
+  else if (strncmp(body, prefix_write, strlen(prefix_write)) == 0)
     {
-      char *cp = strchr(buffer, '\n');
-      if (cp == NULL)
-	log_msg(LOG_NOTICE, "\\n not found in buffer [%s]", buffer);
-      else
+      char *cp = strchr(body, '\n');
+      if (cp != NULL)
 	{
+	  summary = body;
 	  *cp++='\0';
 	  body = cp;
-	  summary = buffer;
 	}
-      r = parse_broadcast_message(prefix_write, buffer, &sender);
+      r = parse_broadcast_message(prefix_write, summary?summary:body, &sender);
       if (r < 0)
 	return 0;
+    }
+  else
+    log_msg(LOG_DEBUG, "Cannot parse [%s]", body);
+
+  if (!isempty(summary) && strlen(summary) > 3)
+    {
+      size_t len = strlen(summary);
+
+      // Remove all LF, BEL and SPACE characters from the end
+      while(summary[len-1] == '\r' || summary[len-1] == '\007' ||
+	    summary[len-1] == ' ')
+	summary[--len] = '\0';
+
+      // Remove leading ':'
+      if (summary[len-1] == ':')
+	summary[len-1] = '\0';
+    }
+
+  if (!isempty(body))
+    {
+      char *cp = body;
+
+      // remove empty first line
+      while(cp[0] == ' ' || cp[0] == '\r')
+	cp++;
+      if (cp[0] == '\n')
+	{
+	  cp++;
+	  body = cp;
+	}
     }
 
   /*
