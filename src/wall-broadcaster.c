@@ -61,7 +61,7 @@ parse_broadcast_message(const char *prefix, const char *msg,
   _cleanup_free_ char *sender = NULL;
   size_t prefix_len = strlen(prefix);
 
-  if (strncmp(msg, prefix, prefix_len) != 0)
+  if (!strneq(msg, prefix, prefix_len))
     return -EINVAL;
 
   const char *sender_start = msg + prefix_len;
@@ -127,7 +127,7 @@ pty_handler(sd_event_source *s _unused_, int fd,
   const char *prefix_wall = "Broadcast message from ";
   const char *prefix_write = "Message from ";
 
-  if (strncmp(body, prefix_wall, strlen(prefix_wall)) == 0)
+  if (strneq(body, prefix_wall, strlen(prefix_wall)))
     {
       char *cp = strchr(body, '\n');
       if (cp != NULL)
@@ -140,7 +140,7 @@ pty_handler(sd_event_source *s _unused_, int fd,
       if (r < 0)
 	return 0;
     }
-  else if (strncmp(body, prefix_write, strlen(prefix_write)) == 0)
+  else if (strneq(body, prefix_write, strlen(prefix_write)))
     {
       char *cp = strchr(body, '\n');
       if (cp != NULL)
@@ -182,7 +182,32 @@ pty_handler(sd_event_source *s _unused_, int fd,
 	  cp++;
 	  body = cp;
 	}
+
+      // remove empty last line
+      size_t len = strlen(body);
+      if (len > 2 && body[len-1] == '\n')
+	{
+	  len--;
+	  while(len > 0 && (body[len-1] == ' ' || body[len-1] == '\r' || body[len-1] == '\007'))
+	    len--;
+	  if (body[len-1] == '\n')
+	    {
+	      if (len >= 2 && body[len-2] == '\r')
+		{
+		  body[len-2] = '\0';
+		  if (len >= 3 && body[len-3] == '\r')
+		    body[len-3] = '\0';
+		}
+	      else
+		body[len-1] = '\0';
+	    }
+	}
+      if (debug)
+	log_msg(LOG_DEBUG, "body=[%s]", body);
     }
+
+  if (!isempty(sender) && strneq(sender, "root@", 5))
+    urgency = 2; // increase urgency if message comes from root
 
   /*
     Signature 'sssys' maps to:
