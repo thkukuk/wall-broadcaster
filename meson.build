@@ -10,6 +10,7 @@ project(
   		  'default_library=shared',
 		  'b_pie=true',
                   'b_lto=true',
+                  'werror=true',
 		  'warning_level=2'],
   license : ['GPL-2.0-or-later'],
   version : '0.1.0',
@@ -37,7 +38,6 @@ possible_cc_flags = [
 		  '-Werror=return-type',
 		  '-Wbad-function-cast',
 		  '-Wcast-align',
-                  '-Werror',
                   '-Wformat-security',
 		  '-Wmissing-declarations',
 		  '-Wmissing-prototypes',
@@ -68,7 +68,7 @@ executable('wall-broadcaster',
            install : true)
 
 wall_bcst_watcher_c = ['src/wall-bcst-watcher.c']
-executable('wall-bcast-watcher',
+executable('wall-bcst-watcher',
            wall_bcst_watcher_c,
            include_directories : inc,
            dependencies : [libsystemd],
