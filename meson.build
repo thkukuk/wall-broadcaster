@@ -74,6 +74,13 @@ executable('wall-bcst-watcher',
            dependencies : [libsystemd],
            install : true)
 
+wall_bcst_gateway_c = ['src/wall-bcst-gateway.c']
+executable('wall-bcst-gateway',
+           wall_bcst_gateway_c,
+           include_directories : inc,
+           dependencies : [libsystemd],
+           install : true)
+
 configure_file(output: 'config.h', configuration: conf)
 
 #subdir('man')
