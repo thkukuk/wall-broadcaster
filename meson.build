@@ -67,6 +67,13 @@ executable('wall-broadcaster',
 	   install_dir : libexecdir,
            install : true)
 
+wall_bcst_watcher_c = ['src/wall-bcst-watcher.c']
+executable('wall-bcast-watcher',
+           wall_bcst_watcher_c,
+           include_directories : inc,
+           dependencies : [libsystemd],
+           install : true)
+
 configure_file(output: 'config.h', configuration: conf)
 
 #subdir('man')

@@ -15,5 +15,6 @@
 *.so.*
 
 # Misc
+a.out
 build*
 *~
