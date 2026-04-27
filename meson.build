@@ -59,7 +59,9 @@ dbuspolicydir = prefixdir / 'share/dbus-1/system.d'
 libsystemd = dependency('libsystemd', required : true)
 libgtk4 = dependency('gtk4', required: get_option('gtk4'))
 
-wall_broadcaster_c = ['src/wall-broadcaster.c']
+wall_broadcaster_c = ['src/wall-broadcaster.c', 
+                      'src/wall-broadcaster-varlink.c',
+                      'src/varlink-org.openSUSE.wall-broadcaster.c']
 executable('wall-broadcaster',
            wall_broadcaster_c,
            include_directories : inc,

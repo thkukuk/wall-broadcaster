@@ -11,13 +11,16 @@
 #include <syslog.h>
 #include <systemd/sd-bus.h>
 #include <systemd/sd-event.h>
+#include <systemd/sd-daemon.h>
 #include <systemd/sd-journal.h>
 
 #include "basics.h"
 
-static bool debug = false;
+bool debug = false;
 
-static void
+extern void log_msg(int priority, const char *fmt, ...); // XXX move to header
+
+void
 log_msg(int priority, const char *fmt, ...)
 {
   static int is_tty = -1;
@@ -267,6 +270,28 @@ create_logind_session(sd_bus *bus, const char *tty)
   return 0;
 }
 
+/* Send a messages to systemd daemon, that inicialization of daemon
+   is finished and daemon is ready to accept connections. */
+static void
+announce_ready (void)
+{
+  int r = sd_notify (0, "READY=1\n"
+                     "STATUS=Processing requests...");
+  if (r < 0)
+    log_msg (LOG_ERR, "sd_notify(READY) failed: %s", strerror(-r));
+}
+
+static void
+announce_stopping (void)
+{
+  int r = sd_notify (0, "STOPPING=1\n"
+                     "STATUS=Shutting down...");
+  if (r < 0)
+    log_msg (LOG_ERR, "sd_notify(STOPPING) failed: %s", strerror(-r));
+}
+
+extern int setup_varlink(sd_bus *bus, sd_event *loop); // XXX move to header file
+
 static int
 run_service_loop(void)
 {
@@ -328,11 +353,17 @@ run_service_loop(void)
   if (r < 0)
     return return_errno_error("sd_event_add_io", r);
 
+  r = setup_varlink(bus, event);
+  if (r < 0)
+    return r;
+
   log_msg(LOG_INFO, "Wall Broadcaster started on %s", pts_name);
+  announce_ready();
   r = sd_event_loop(event);
+  announce_stopping();
   log_msg(LOG_INFO, "Wall Broadcaster stopped with code %i", r);
 
-  return 0;
+  return r;
 }
 
 static void
