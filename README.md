@@ -6,8 +6,9 @@ them via D-BUS. Clients, e.g. for graphical desktops, can listen to it
 and display the messages to the user.
 
 In the past, terminals did register as own "session" with `/run/utmp` and
-displayed the messages to the user in the terminal. As consequence, people
-having a lot of terminals running got the message in every single terminal.
+displayed the `wall` messages to the user in the terminal. As consequence,
+people having a lot of terminals running got the message in every single
+terminal.
 This was so annyoing, that several GUI don't support this anymore.
 At the same time, desktop users without open terminal did never got this
 informations.
