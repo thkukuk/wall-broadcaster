@@ -83,6 +83,13 @@ executable('wall-bcst-gateway',
            dependencies : [libsystemd],
            install : true)
 
+wall_bcst_send_c = ['src/wall-bcst-send.c']
+executable('wall-bcst-send',
+           wall_bcst_send_c,
+           include_directories : inc,
+           dependencies : [libsystemd],
+           install : true)
+
 if libgtk4.found()
 wall_bcst_watcher_gtk4_c = ['src/wall-bcst-watcher-gtk4.c']
 executable('wall-bcst-watcher-gtk4',
