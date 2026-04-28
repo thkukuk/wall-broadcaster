@@ -15,10 +15,9 @@
 #include <systemd/sd-journal.h>
 
 #include "basics.h"
+#include "wall-broadcaster.h"
 
 bool debug = false;
-
-extern void log_msg(int priority, const char *fmt, ...); // XXX move to header
 
 void
 log_msg(int priority, const char *fmt, ...)
@@ -48,6 +47,29 @@ log_msg(int priority, const char *fmt, ...)
     sd_journal_printv(priority, fmt, ap);
 
   va_end(ap);
+}
+
+int
+send_dbus_msg(sd_bus *bus, const char *appname, const char *summary,
+	      const char *body, int urgency, const char *sender)
+{
+  int r;
+
+  /*
+    Signature 'sssys' maps to:
+    Application Name(s), Summary(s), Body(s), Urgency(y), Sender(s)
+    Application Name, Summary, Body and Urgency follow the
+    Freedesktop Notification Specification.
+  */
+  r = sd_bus_emit_signal(bus,
+			 "/org/opensuse/WallBroadcast",
+			 "org.opensuse.WallBroadcast",
+			 "MessageReceived",
+			 "sssys",
+			 strempty(appname), strempty(summary),
+			 strna(body), urgency, strna(sender));
+
+  return r;
 }
 
 static int
@@ -212,19 +234,7 @@ pty_handler(sd_event_source *s _unused_, int fd,
   if (!isempty(sender) && strneq(sender, "root@", 5))
     urgency = 2; // increase urgency if message comes from root
 
-  /*
-    Signature 'sssys' maps to:
-    Application Name(s), Summary(s), Body(s), Urgency(y), Sender(s)
-    Application Name, Summary, Body and Urgency follow the
-    Freedesktop Notification Specification.
-  */
-  sd_bus_emit_signal(bus,
-		     "/org/opensuse/WallBroadcast",
-		     "org.opensuse.WallBroadcast",
-		     "MessageReceived",
-		     "sssys",
-		     strempty(appname), strempty(summary), strna(body),
-		     urgency, strna(sender));
+  send_dbus_msg(bus, appname, summary, body, urgency, sender);
 
   return 0;
 }
@@ -290,7 +300,18 @@ announce_stopping (void)
     log_msg (LOG_ERR, "sd_notify(STOPPING) failed: %s", strerror(-r));
 }
 
-extern int setup_varlink(sd_bus *bus, sd_event *loop); // XXX move to header file
+static int
+create_context (ctx_t **ctx)
+{
+  if ((*ctx = malloc(sizeof(ctx_t))) == NULL)
+    {
+      log_msg (LOG_ERR, "ERROR: Out of memory!");
+      return -ENOMEM;
+    }
+  **ctx = (ctx_t) { NULL, NULL };
+
+  return 0;
+}
 
 static int
 run_service_loop(void)
@@ -299,6 +320,7 @@ run_service_loop(void)
   _cleanup_(sd_event_unrefp) sd_event *event = NULL;
   _cleanup_close_ int ptm = -EBADF;
   _cleanup_close_ int pts = -EBADF;
+  ctx_t *ctx = NULL;
   char *pts_name;
   int r;
 
@@ -353,7 +375,11 @@ run_service_loop(void)
   if (r < 0)
     return return_errno_error("sd_event_add_io", r);
 
-  r = setup_varlink(bus, event);
+  create_context(&ctx);
+  ctx->loop = event;
+  ctx->bus = bus;
+
+  r = setup_varlink(ctx);
   if (r < 0)
     return r;
 
@@ -362,6 +388,8 @@ run_service_loop(void)
   r = sd_event_loop(event);
   announce_stopping();
   log_msg(LOG_INFO, "Wall Broadcaster stopped with code %i", r);
+
+  free(ctx);
 
   return r;
 }

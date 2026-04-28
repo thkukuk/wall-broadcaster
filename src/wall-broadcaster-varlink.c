@@ -7,31 +7,10 @@
 #include <systemd/sd-varlink.h>
 
 #include "basics.h"
+#include "wall-broadcaster.h"
 #include "varlink-org.openSUSE.wall-broadcaster.h"
 
 #define VARLINK_SOCKET "/run/wall-broadcaster.socket"
-
-extern bool debug; // XXX move to header file
-extern void log_msg(int priority, const char *fmt, ...); // XXX move to header file
-extern int setup_varlink(sd_bus *bus, sd_event *loop); // XXX move to header file
-
-typedef struct {
-  sd_event *loop;
-  sd_bus *bus;
-} ctx_t;
-
-static int
-create_context (ctx_t **ctx)
-{
-  if ((*ctx = malloc(sizeof(ctx_t))) == NULL)
-    {
-      log_msg (LOG_ERR, "ERROR: Out of memory!");
-      return -ENOMEM;
-    }
-  **ctx = (ctx_t) { NULL, NULL };
-
-  return 0;
-}
 
 static int
 vl_method_quit(sd_varlink *link, sd_json_variant *parameters,
@@ -148,35 +127,18 @@ vl_method_broadcast(sd_varlink *link, sd_json_variant *parameters,
       return sd_varlink_error(link, SD_VARLINK_ERROR_PERMISSION_DENIED, parameters);
     }
 
-  // XXX move in common function
-  /*
-    Signature 'sssys' maps to:
-    Application Name(s), Summary(s), Body(s), Urgency(y), Sender(s)
-    Application Name, Summary, Body and Urgency follow the
-    Freedesktop Notification Specification.
-  */
-  r = sd_bus_emit_signal(ctx->bus,
-			 "/org/opensuse/WallBroadcast",
-			 "org.opensuse.WallBroadcast",
-			 "MessageReceived",
-			 "sssys",
-			 p.appname, p.summary, p.body,
-			 p.urgency, strna(p.sender));
+  send_dbus_msg(ctx->bus, p.appname, p.summary, p.body, p.urgency,
+		strna(p.sender));
 
 
   return sd_varlink_replybo(link, SD_JSON_BUILD_PAIR_BOOLEAN("Success", true));
 }
 
 int
-setup_varlink(sd_bus *bus, sd_event *loop)
+setup_varlink(ctx_t *ctx)
 {
-  ctx_t *ctx = NULL; // XXX cleanup needed.
   int r;
   /* XXX _cleanup_(sd_varlink_server_unrefp) */ sd_varlink_server *server = NULL;
-
-  create_context(&ctx);
-  ctx->loop = loop;
-  ctx->bus = bus;
 
   r = sd_varlink_server_new(&server, SD_VARLINK_SERVER_ACCOUNT_UID|SD_VARLINK_SERVER_INHERIT_USERDATA);
   if (r < 0)
@@ -229,16 +191,25 @@ setup_varlink(sd_bus *bus, sd_event *loop)
     }
 
   r = sd_varlink_server_set_exit_on_idle(server, false);
-  if (r < 0) //  XXX
-    return r;
+  if (r < 0)
+    {
+      log_msg(LOG_ERR, "Failed to disable 'exit on idle': %s", strerror(-r));
+      return r;
+    }
 
-  r = sd_varlink_server_attach_event(server, loop, SD_EVENT_PRIORITY_NORMAL);
-  if (r < 0) // XXX
-    return r;
+  r = sd_varlink_server_attach_event(server, ctx->loop, SD_EVENT_PRIORITY_NORMAL);
+  if (r < 0)
+    {
+      log_msg(LOG_ERR, "Failed to attach event loop to varlink server: %s", strerror(-r));
+      return r;
+    }
 
   r = sd_varlink_server_listen_auto(server);
-  if (r < 0) // XXX
-    return r;
+  if (r < 0)
+    {
+      log_msg(LOG_ERR, "Varlink server listen auto failed: %s", strerror(-r));
+      return r;
+    }
 
   return 0;
 }
