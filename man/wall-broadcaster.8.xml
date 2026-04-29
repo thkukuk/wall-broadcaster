@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="wall-broadcaster">
+  <refmeta>
+    <refentrytitle>wall-broadcaster</refentrytitle>
+    <manvolnum>8</manvolnum>
+    <refmiscinfo class="source">wall-broadcaster %version%</refmiscinfo>
+    <refmiscinfo class="manual">wall-broadcaster</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>wall-broadcaster</refname>
+    <refpurpose>read wall and write messages and broadcast them via D-BUS</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>wall-broadcaster</command>
+      <arg choice="opt"><option>-d</option></arg>
+      <arg choice="opt"><option>--help</option></arg>
+      <arg choice="opt"><option>--version</option></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+  <refsect1>
+    <title>DESCRIPTION</title>
+    <para>The <command>wall-broadcaster</command> utility will open a PTY and registers itself as new session with this TTY on systemd-logind. It will watch for messages on that TTY and tries to parse them. Messages send by wall or write will be splitted in a summary and body and cleaned up, else the message will be forwarded as "body". The information are then send via the org.opensuse.WallBroadcast dbus interface.</para>
+    <para>
+      Additonal the tool will listen on a varlink interface for messages, which could be send with
+      <citerefentry>
+        <refentrytitle>wall-bcst-send</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>.
+    </para>
+  </refsect1>
+  <refsect1>
+    <title>D-BUS PROTOCOL</title>
+    <para>The notification components are very similar to the Freedesktop Notifications Specification to make it easy to convert it to the desktop notification system.</para>
+    <itemizedlist>
+      <listitem>
+        <para><emphasis role="bold">Path:</emphasis> /org/opensuse/WallBroadcast</para>
+      </listitem>
+      <listitem>
+        <para><emphasis role="bold">Interface:</emphasis> org.opensuse.WallBroadcast</para>
+      </listitem>
+    </itemizedlist>
+
+    <variablelist>
+      <varlistentry>
+        <term>Application Name</term>
+        <listitem>
+          <para><emphasis role="bold">Type:</emphasis> String(s). Optional name of the application sending the notification.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Summary</term>
+        <listitem>
+          <para><emphasis role="bold">Type:</emphasis> String(s). Single line overview.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Body</term>
+        <listitem>
+          <para><emphasis role="bold">Type:</emphasis> String(s). Multi-line text.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Urgency</term>
+        <listitem>
+          <para><emphasis role="bold">Type:</emphasis> Byte(y). 0=Low, 1=Normal, 2=Critical.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Sender</term>
+        <listitem>
+          <para><emphasis role="bold">Type:</emphasis> String(s). Optional name of the sender.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+  <refsect1>
+    <title>OPTIONS</title>
+    <variablelist>
+      <varlistentry>
+        <term><option>-d</option>, <option>--debug</option></term>
+        <listitem>
+          <para>Print debug messages</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-h</option>, <option>--help</option></term>
+        <listitem>
+          <para>Give this help list</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-v</option>, <option>--version</option></term>
+        <listitem>
+          <para>Print program version</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>SEE ALSO</title>
+    <para>
+      <citerefentry>
+        <refentrytitle>wall-bcst-gateway</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>wall-bcst-send</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>wall-bcst-watcher</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>wall-bcst-watcher-gtk4</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>
+    </para>
+  </refsect1>
+
+</refentry>

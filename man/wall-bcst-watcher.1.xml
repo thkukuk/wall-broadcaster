@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="wall-bcst-watcher">
+
+  <refmeta>
+    <refentrytitle>wall-bcst-watcher</refentrytitle>
+    <manvolnum>1</manvolnum>
+    <refmiscinfo class="source">wall-broadcaster %version%</refmiscinfo>
+    <refmiscinfo class="manual">wall-bcst-watcher</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>wall-bcst-watcher</refname>
+    <refpurpose>listen on wall broadcast messages</refpurpose>
+  </refnamediv>
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>wall-bcst-watcher</command>
+      <arg choice="opt"><option>--help</option></arg>
+      <arg choice="opt"><option>--version</option></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+  <refsect1>
+    <title>DESCRIPTION</title>
+    <para>This application listens to org.opensuse.WallBroadcast messages and prints them on stdout.</para>
+  </refsect1>
+  <refsect1>
+    <title>OPTIONS</title>
+    <variablelist>
+      <varlistentry>
+        <term><option>-h</option>, <option>--help</option></term>
+        <listitem>
+          <para>Give this help list</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-v</option>, <option>--version</option></term>
+        <listitem>
+          <para>Print program version</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>SEE ALSO</title>
+    <para>
+      <citerefentry>
+        <refentrytitle>wall-broadcaster</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>wall-bcst-gateway</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>wall-bcst-send</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>wall-bcst-watcher-gtk4</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>
+    </para>
+  </refsect1>
+
+</refentry>

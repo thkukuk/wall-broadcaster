@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="wall-bcst-send">
+  <refmeta>
+    <refentrytitle>wall-bcst-send</refentrytitle>
+    <manvolnum>1</manvolnum>
+    <refmiscinfo class="source">wall-broadcaster %version%</refmiscinfo>
+    <refmiscinfo class="manual">wall-bcst-send</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>wall-bcst-send</refname>
+    <refpurpose>send wall broadcast messages via dbus</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>wall-bcst-send</command>
+      <arg choice="opt"><option>-a <replaceable>string</replaceable></option></arg>
+      <arg choice="opt"><option>-b <replaceable>string</replaceable></option></arg>
+      <arg choice="opt"><option>-s <replaceable>string</replaceable></option></arg>
+      <arg choice="opt"><option>-S <replaceable>string</replaceable></option></arg>
+      <arg choice="opt"><option>-u <replaceable>0|1|2</replaceable></option></arg>
+      <arg choice="opt"><option>--help</option></arg>
+      <arg choice="opt"><option>--version</option></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>DESCRIPTION</title>
+    <para><command>wall-bcst-send</command> allows users or scripts to manually send wall broadcast messages over D-Bus via the org.opensuse.WallBroadcast interface, specifying fields such as application name, summary, body, sender, and urgency.</para>
+  </refsect1>
+  <refsect1>
+    <title>OPTIONS</title>
+    <variablelist>
+      <varlistentry>
+        <term><option>-a</option>, <option>--appname <replaceable>string</replaceable></option></term>
+        <listitem>
+          <para>Application Name</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-b</option>, <option>--body <replaceable>string</replaceable></option></term>
+        <listitem>
+          <para>Message body</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-s</option>, <option>--summary <replaceable>string</replaceable></option></term>
+        <listitem>
+          <para>Summary of message</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-S</option>, <option>--sender <replaceable>string</replaceable></option></term>
+        <listitem>
+          <para>Message sender</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-u</option>, <option>--urgency <replaceable>0|1|2</replaceable></option></term>
+        <listitem>
+          <para>Message urgency</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-h</option>, <option>--help</option></term>
+        <listitem>
+          <para>Give this help list</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-v</option>, <option>--version</option></term>
+        <listitem>
+          <para>Print program version</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>SEE ALSO</title>
+    <para>
+      <citerefentry>
+        <refentrytitle>wall-broadcaster</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>wall-bcst-gateway</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>wall-bcst-watcher</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>wall-bcst-watcher-gtk4</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>
+    </para>
+  </refsect1>
+
+
+</refentry>

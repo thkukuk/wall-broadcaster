@@ -101,7 +101,7 @@ endif
 
 configure_file(output: 'config.h', configuration: conf)
 
-#subdir('man')
+subdir('man')
 subdir('units')
 subdir('dbus')
 subdir('desktop')
