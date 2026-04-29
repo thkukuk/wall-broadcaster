@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Wall Broadcast Gateway
+Comment=Listens to D-Bus and converts messages to Freedesktop Notifications
+Exec=/usr/bin/wall-bcst-gateway
+Icon=preferences-system-network
+Terminal=false
+Type=Application
+Categories=System;Utility;
+StartupNotify=false

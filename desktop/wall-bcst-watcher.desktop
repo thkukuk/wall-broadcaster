@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Wall Broadcast Watcher
+Comment=Listens for wall broadcast messages via D-Bus in the background
+Exec=/usr/bin/wall-bcst-watcher-gtk4
+Icon=dialog-information
+Terminal=false
+Type=Application
+Categories=System;Utility;
+StartupNotify=false
+NoDisplay=true
