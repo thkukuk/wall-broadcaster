@@ -53,15 +53,37 @@ The notification components are very similar to the
 * Path=/org/opensuse/WallBroadcast
 * Interface=org.opensuse.WallBroadcast
 
-## Enable and Test
-Reload systemd, enable the service, and start it.
+## Enable Service and Desktop Applications
+
+### wall-broadcaster
+
+Reload systemd if necessary, enable the service, and start it.
 
 ```sh
 sudo systemctl daemon-reload
 sudo systemctl enable --now wall-broadcaster.service
 ```
 
-### Testing
+### wall-bcst-gateway
+
+Link the desktop file into your autostart folder:
+
+```sh
+mkdir -p .config/autostart
+ln -sf /usr/share/applications/wall-bcst-gateway.desktop .config/autostart/
+```
+
+### wall-bcst-watcher-gtk4
+
+Link the desktop file into your autostart folder:
+
+```sh
+mkdir -p .config/autostart
+ln -sf /usr/share/applications/wall-bcst-watcher.desktop .config/autostart/
+```
+
+## Testing
+
 * Open a new terminal and monitor the D-Bus signals using `dbus-monitor`:
   ```sh
   sudo dbus-monitor --system "sender='org.opensuse.WallBroadcast'"
