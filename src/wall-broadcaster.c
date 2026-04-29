@@ -283,32 +283,41 @@ create_logind_session(sd_bus *bus, const char *tty)
 /* Send a messages to systemd daemon, that inicialization of daemon
    is finished and daemon is ready to accept connections. */
 static void
-announce_ready (void)
+announce_ready(void)
 {
-  int r = sd_notify (0, "READY=1\n"
-                     "STATUS=Processing requests...");
+  int r = sd_notify(0, "READY=1\n"
+		    "STATUS=Processing requests...");
   if (r < 0)
-    log_msg (LOG_ERR, "sd_notify(READY) failed: %s", strerror(-r));
+    log_msg(LOG_ERR, "sd_notify(READY) failed: %s", strerror(-r));
 }
 
 static void
-announce_stopping (void)
+announce_stopping(void)
 {
-  int r = sd_notify (0, "STOPPING=1\n"
-                     "STATUS=Shutting down...");
+  int r = sd_notify(0, "STOPPING=1\n"
+		    "STATUS=Shutting down...");
   if (r < 0)
-    log_msg (LOG_ERR, "sd_notify(STOPPING) failed: %s", strerror(-r));
+    log_msg(LOG_ERR, "sd_notify(STOPPING) failed: %s", strerror(-r));
 }
 
 static int
-create_context (ctx_t **ctx)
+create_context(ctx_t **ctx)
 {
   if ((*ctx = malloc(sizeof(ctx_t))) == NULL)
     {
-      log_msg (LOG_ERR, "ERROR: Out of memory!");
+      log_msg(LOG_ERR, "ERROR: Out of memory!");
       return -ENOMEM;
     }
-  **ctx = (ctx_t) { NULL, NULL };
+  **ctx = (ctx_t) { NULL, NULL, NULL };
+
+  return 0;
+}
+
+static int
+destroy_context(ctx_t **ctx)
+{
+  (*ctx)->allow_send = mfree((*ctx)->allow_send);
+  *ctx = mfree(*ctx);
 
   return 0;
 }
@@ -389,7 +398,7 @@ run_service_loop(void)
   announce_stopping();
   log_msg(LOG_INFO, "Wall Broadcaster stopped with code %i", r);
 
-  free(ctx);
+  destroy_context(&ctx);
 
   return r;
 }

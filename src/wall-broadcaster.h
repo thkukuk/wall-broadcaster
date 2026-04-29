@@ -7,6 +7,7 @@ extern bool debug;
 typedef struct {
   sd_event *loop;
   sd_bus *bus;
+  uid_t *allow_send;
 } ctx_t;
 
 extern void log_msg(int priority, const char *fmt, ...);

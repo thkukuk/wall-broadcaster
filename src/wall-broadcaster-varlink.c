@@ -2,6 +2,7 @@
 
 #include "config.h"
 
+#include <pwd.h>
 #include <syslog.h>
 #include <systemd/sd-bus.h>
 #include <systemd/sd-varlink.h>
@@ -11,6 +12,22 @@
 #include "varlink-org.openSUSE.wall-broadcaster.h"
 
 #define VARLINK_SOCKET "/run/wall-broadcaster.socket"
+
+static bool
+check_caller_perms(uid_t peer_uid, uid_t *allowed)
+{
+  if (peer_uid == 0)
+    return true;
+
+  if (!allowed)
+    return false;
+
+  for (size_t i = 0; allowed[i] != 0; i++)
+    if (peer_uid == allowed[i])
+      return true;
+
+  return false;
+}
 
 static int
 vl_method_quit(sd_varlink *link, sd_json_variant *parameters,
@@ -121,15 +138,24 @@ vl_method_broadcast(sd_varlink *link, sd_json_variant *parameters,
       log_msg(LOG_ERR, "Failed to get peer UID: %s", strerror(-r));
       return r;
     }
-  if (peer_uid != 0)
+
+  if (!check_caller_perms(peer_uid, ctx->allow_send))
     {
       log_msg(LOG_WARNING, "Broadcast: peer UID %i denied", peer_uid);
       return sd_varlink_error(link, SD_VARLINK_ERROR_PERMISSION_DENIED, parameters);
     }
 
+  // add caller as sender if not set
+  if (p.sender == NULL)
+    {
+      // ignore errors, sender is optional
+      struct passwd *pw = getpwuid(peer_uid);
+      if (pw && pw->pw_name)
+	p.sender = strdup(pw->pw_name);
+    }
+
   send_dbus_msg(ctx->bus, p.appname, p.summary, p.body, p.urgency,
 		strna(p.sender));
-
 
   return sd_varlink_replybo(link, SD_JSON_BUILD_PAIR_BOOLEAN("Success", true));
 }
