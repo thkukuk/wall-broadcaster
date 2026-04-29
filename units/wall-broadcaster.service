@@ -8,6 +8,30 @@ Type=simple
 Environment="WALLBROADCASTER_OPTS="
 EnvironmentFile=-/etc/default/wall-broadcaster
 ExecStart=/usr/libexec/wall-broadcaster $WALLBROADCASTER_OPTS
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+NoNewPrivileges=yes
+PrivateDevices=yes
+PrivateTmp=yes
+PrivateUsers=yes
+ProcSubset=pid
+ProtectClock=yes
+ProtectControlGroups=yes
+ProtectHome=yes
+ProtectHostname=yes
+ProtectKernelLogs=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+ProtectProc=invisible
+ProtectSystem=strict
+ReadWritePaths=/run /dev
+RestrictNamespaces=yes
+RestrictRealtime=true
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+IPAddressDeny=any
+PrivateNetwork=yes
+RestrictAddressFamilies=AF_UNIX
 
 [Install]
 WantedBy=multi-user.target
