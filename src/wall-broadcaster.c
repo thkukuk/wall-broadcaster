@@ -217,7 +217,7 @@ pty_handler(sd_event_source *s _unused_, int fd,
 	  len--;
 	  while(len > 0 && (body[len-1] == ' ' || body[len-1] == '\r' || body[len-1] == '\007'))
 	    len--;
-	  if (body[len-1] == '\n')
+	  if (len > 0 && body[len-1] == '\n')
 	    {
 	      if (len >= 2 && body[len-2] == '\r')
 		{
