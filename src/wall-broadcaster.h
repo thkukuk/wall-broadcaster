@@ -8,6 +8,7 @@ typedef struct {
   sd_event *loop;
   sd_bus *bus;
   uid_t *allow_send;
+  sd_varlink_server *server;
 } ctx_t;
 
 extern void log_msg(int priority, const char *fmt, ...);

@@ -14,6 +14,7 @@
 #include <systemd/sd-event.h>
 #include <systemd/sd-daemon.h>
 #include <systemd/sd-journal.h>
+#include <systemd/sd-varlink.h>
 
 #include "basics.h"
 #include "wall-broadcaster.h"
@@ -309,7 +310,7 @@ create_context(ctx_t **ctx)
       log_msg(LOG_ERR, "ERROR: Out of memory!");
       return -ENOMEM;
     }
-  **ctx = (ctx_t) { NULL, NULL, NULL };
+  **ctx = (ctx_t) { NULL, NULL, NULL, NULL };
 
   return 0;
 }
@@ -318,9 +319,16 @@ static int
 destroy_context(ctx_t **ctx)
 {
   (*ctx)->allow_send = mfree((*ctx)->allow_send);
+  (*ctx)->server = sd_varlink_server_unref((*ctx)->server);
   *ctx = mfree(*ctx);
 
   return 0;
+}
+
+static inline void destroy_contextp(ctx_t **ctx)
+{
+  if (*ctx)
+    destroy_context(ctx);
 }
 
 static int
@@ -330,7 +338,7 @@ run_service_loop(void)
   _cleanup_(sd_event_unrefp) sd_event *event = NULL;
   _cleanup_close_ int ptm = -EBADF;
   _cleanup_close_ int pts = -EBADF;
-  ctx_t *ctx = NULL;
+  _cleanup_(destroy_contextp) ctx_t *ctx = NULL;
   char *pts_name;
   int r;
 
@@ -360,7 +368,7 @@ run_service_loop(void)
   // Open the slave side so the master doesn't trigger EOF
   pts = open(pts_name, O_RDWR);
   if (pts == -1)
-    return return_errno_error("open", r);
+    return return_errno_error("open", -errno);
 
   // Connect to System D-Bus
   r = sd_bus_default_system(&bus);
@@ -398,8 +406,6 @@ run_service_loop(void)
   r = sd_event_loop(event);
   announce_stopping();
   log_msg(LOG_INFO, "Wall Broadcaster stopped with code %i", r);
-
-  destroy_context(&ctx);
 
   return r;
 }

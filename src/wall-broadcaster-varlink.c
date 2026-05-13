@@ -151,7 +151,14 @@ vl_method_broadcast(sd_varlink *link, sd_json_variant *parameters,
       // ignore errors, sender is optional
       struct passwd *pw = getpwuid(peer_uid);
       if (pw && pw->pw_name)
-	p.sender = strdup(pw->pw_name);
+	{
+	  p.sender = strdup(pw->pw_name);
+	  if (p.sender == NULL)
+	    {
+	      log_msg(LOG_ERR, "Failed to allocate memory for sender name");
+	      return -ENOMEM;
+	    }
+	}
     }
 
   send_dbus_msg(ctx->bus, p.appname, p.summary, p.body, p.urgency,
@@ -164,9 +171,9 @@ int
 setup_varlink(ctx_t *ctx)
 {
   int r;
-  /* XXX _cleanup_(sd_varlink_server_unrefp) */ sd_varlink_server *server = NULL;
 
-  r = sd_varlink_server_new(&server, SD_VARLINK_SERVER_ACCOUNT_UID|SD_VARLINK_SERVER_INHERIT_USERDATA);
+  r = sd_varlink_server_new(&(ctx->server),
+			    SD_VARLINK_SERVER_ACCOUNT_UID|SD_VARLINK_SERVER_INHERIT_USERDATA);
   if (r < 0)
     {
       log_msg(LOG_ERR, "Failed to allocate varlink server: %s",
@@ -174,14 +181,14 @@ setup_varlink(ctx_t *ctx)
       return r;
     }
 
-  r = sd_varlink_server_set_info(server, "openSUSE",
+  r = sd_varlink_server_set_info(ctx->server, "openSUSE",
                                  PACKAGE" (wall-broadcaster)",
                                  VERSION,
                                  "https://github.com/thkukuk/wall-broadcaster");
   if (r < 0)
     return r;
 
-  r = sd_varlink_server_set_description(server, "WallBroadcaster");
+  r = sd_varlink_server_set_description(ctx->server, "WallBroadcaster");
   if (r < 0)
     {
       log_msg(LOG_ERR, "Failed to set varlink server description: %s",
@@ -189,9 +196,9 @@ setup_varlink(ctx_t *ctx)
       return r;
     }
 
-  sd_varlink_server_set_userdata(server, ctx);
+  sd_varlink_server_set_userdata(ctx->server, ctx);
 
-  r = sd_varlink_server_add_interface(server, &vl_interface_org_openSUSE_wallBroadcaster);
+  r = sd_varlink_server_add_interface(ctx->server, &vl_interface_org_openSUSE_wallBroadcaster);
   if (r < 0)
     {
       log_msg(LOG_ERR, "Failed to add Varlink interface: %s",
@@ -199,7 +206,7 @@ setup_varlink(ctx_t *ctx)
       return r;
     }
 
-  r = sd_varlink_server_bind_method_many(server,
+  r = sd_varlink_server_bind_method_many(ctx->server,
                                          "org.openSUSE.wallBroadcaster.Broadcast", vl_method_broadcast,
                                          "org.openSUSE.wallBroadcaster.Quit",      vl_method_quit);
   if (r < 0)
@@ -209,28 +216,28 @@ setup_varlink(ctx_t *ctx)
       return r;
     }
 
-  r = sd_varlink_server_listen_address(server, VARLINK_SOCKET, 0666);
+  r = sd_varlink_server_listen_address(ctx->server, VARLINK_SOCKET, 0666);
   if (r < 0)
     {
       log_msg(LOG_ERR, "Failed to bind to Varlink socket: %s", strerror(-r));
       return r;
     }
 
-  r = sd_varlink_server_set_exit_on_idle(server, false);
+  r = sd_varlink_server_set_exit_on_idle(ctx->server, false);
   if (r < 0)
     {
       log_msg(LOG_ERR, "Failed to disable 'exit on idle': %s", strerror(-r));
       return r;
     }
 
-  r = sd_varlink_server_attach_event(server, ctx->loop, SD_EVENT_PRIORITY_NORMAL);
+  r = sd_varlink_server_attach_event(ctx->server, ctx->loop, SD_EVENT_PRIORITY_NORMAL);
   if (r < 0)
     {
       log_msg(LOG_ERR, "Failed to attach event loop to varlink server: %s", strerror(-r));
       return r;
     }
 
-  r = sd_varlink_server_listen_auto(server);
+  r = sd_varlink_server_listen_auto(ctx->server);
   if (r < 0)
     {
       log_msg(LOG_ERR, "Varlink server listen auto failed: %s", strerror(-r));

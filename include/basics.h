@@ -38,7 +38,7 @@ static inline void freep(void *p) {
 }
 
 static inline void closep(int *fd) {
-  if (*fd)
+  if (fd && *fd >= 0)
         close(*fd);
 }
 
