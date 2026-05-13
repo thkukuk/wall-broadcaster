@@ -40,6 +40,7 @@ static inline void freep(void *p) {
 static inline void closep(int *fd) {
   if (fd && *fd >= 0)
         close(*fd);
+  *fd = -EBADF;
 }
 
 static inline void fclosep(FILE **f) {
